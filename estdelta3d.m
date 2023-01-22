@@ -13,7 +13,9 @@ if nargin<3
 end
 num_compons=num_compons1.^3;
 [length_x, length_y, length_z, n]=size(XX);
-
+if n~=225
+    disp("Warning: this code only works for n=225")
+end
 objectives=zeros(size(Ds));
 %diag_objectives=zeros(size(Ds));
 sizes=zeros(size(Ds));
@@ -122,45 +124,45 @@ for Dno=1:length(Ds)
     allsortedevals(:,Dno)=sortedevals;
     previous_c1=c1_est;previous_c2=c2_est;previous_c3=c3_est;previous_symbol=Bsymbol;
 end
-Achanges(1)=0; Bchanges(1)=0; Cchanges(1)=0;
 %%
-spacing=25;
-for t=1:15:n-25 %:25:n %
-    disp(t)
-    symbolsumpartial=symbol_sum-sum(symbol_times(:,:,:,t:t+spacing-1),4);
+disp("Performing 15-fold cross-validation:")
+for m=1:15
+    disp(m)
+    start_leaveout=max(1,15*(m-1)-4); end_leaveout=min(15*m+5,225);
+    leaveouts=start_leaveout:end_leaveout;
+    symbolsumpartial=symbol_sum-sum(symbol_times(:,:,:,leaveouts),4);
     for Dno=1:length(Ds)
         D=Ds(Dno);
-        st=(stsum(Dno)-einsum(XX(1:end-D,1:end-D,1:end-D,t:t+spacing-1),XX(1+D:end,1+D:end,1+D:end,t:t+spacing-1),...
-            [1 2 3 4],[1 2 3 4]))/(n-spacing);
-        spt1=(spt1sum(:,:,Dno)-einsum(XX(:,1:end-D,1:end-D,t:t+spacing-1),XX(:,1+D:end,1+D:end,t:t+spacing-1),...
-            [2 3 4],[2 3 4]))/(n-spacing);
-        spt2=(spt2sum(:,:,Dno)-einsum(XX(1:end-D,:,1:end-D,t:t+spacing-1),XX(1+D:end,:,1+D:end,t:t+spacing-1),...
-            [1 3 4],[1 3 4]))/(n-spacing);
-        spt3=(spt3sum(:,:,Dno)-einsum(XX(1:end-D,1:end-D,:,t:t+spacing-1),XX(1+D:end,1+D:end,:,t:t+spacing-1),...
-            [1 2 4],[1 2 4]))/(n-spacing);
+        st=(stsum(Dno)-einsum(XX(1:end-D,1:end-D,1:end-D,leaveouts),XX(1+D:end,1+D:end,1+D:end,leaveouts),...
+            [1 2 3 4],[1 2 3 4]))/(n-length(leaveouts));
+        spt1=(spt1sum(:,:,Dno)-einsum(XX(:,1:end-D,1:end-D,leaveouts),XX(:,1+D:end,1+D:end,leaveouts),...
+            [2 3 4],[2 3 4]))/(n-length(leaveouts));
+        spt2=(spt2sum(:,:,Dno)-einsum(XX(1:end-D,:,1:end-D,leaveouts),XX(1+D:end,:,1+D:end,leaveouts),...
+            [1 3 4],[1 3 4]))/(n-length(leaveouts));
+        spt3=(spt3sum(:,:,Dno)-einsum(XX(1:end-D,1:end-D,:,leaveouts),XX(1+D:end,1+D:end,:,leaveouts),...
+            [1 2 4],[1 2 4]))/(n-length(leaveouts));
         c1_est=spt1; c1_est = (c1_est+c1_est')/2;
-        c2_est=spt2/st; c2_est = (c2_est+c2_est')/2;
-        c3_est=spt3/st; c3_est = (c3_est+c3_est')/2;
+        c2_est=spt2; c2_est = (c2_est+c2_est')/2;
+        c3_est=spt3/st/st; c3_est = (c3_est+c3_est')/2;
         [V1,D1] = eig(c1_est); D1pos=max(D1,0); c1_est=V1*D1pos*V1';
         [V2,D2] = eig(c2_est); D2pos=max(D2,0); c2_est=V2*D2pos*V2';
         [V3,D3] = eig(c3_est); D3pos=max(D3,0); c3_est=V3*D3pos*V3';
         %%%Now must use Toeplitz averaging
-        Bsymbol=(symbol_sum-symbolsumpartial)/(n-spacing)-toeplitzouterprod(c1_est,c2_est,c3_est);
+        Bsymbol=symbolsumpartial/(n-length(leaveouts))-toeplitzouterprod(c1_est,c2_est,c3_est);
         croppedBsymbol=Bsymbol(1:D,1:D,1:D); Bsymbol=zeros(length_x,length_y,length_z); Bsymbol(1:D,1:D,1:D)=croppedBsymbol;
-
         Qsymbol=zeros(length_x*2-1,length_y*2-1,length_z*2-1);
         Qsymbol(:,:,1:length_z)=[Bsymbol,flip(Bsymbol(:,2:end,:),2);...
             flip(Bsymbol(2:end,:,:),1), flip(flip(Bsymbol(2:end,2:end,:),1),2)];
         Qsymbol(:,:,length_z+1:end)=[flip(Bsymbol(:,:,2:end),3),flip(flip(Bsymbol(:,2:end,2:end),2),3);...
             flip(flip(Bsymbol(2:end,:,2:end),1),3), flip(flip(flip(Bsymbol(2:end,2:end,2:end,:),1),2),3)];
-        for tt=t+5:t+spacing-6 %t:t+spacing-1
+        for tt=15*(m-1)+1:15*m
             paddedXtt=zeros(2*length_x-1,2*length_y-1,2*length_z-1);
             paddedXtt(1:length_x,1:length_y,1:length_z)=XX(:,:,:,tt);
             Q_matX=ifftn(fftn(Qsymbol).*fftn(paddedXtt));
             B_matX=Q_matX(1:length_x,1:length_y,1:length_z);
             A_matX=tensorprod(tensorprod(tensorprod(XX(:,:,:,tt),c1_est,1,1),c2_est,1,1),c3_est,1,1);
             XCX=tensorprod(XX(:,:,:,tt),A_matX+B_matX,[1 2 3]);
-            objectives(Dno)=objectives(Dno)-2*XCX/210;
+            objectives(Dno)=objectives(Dno)-2*XCX/n;
             %diag_objectives(Dno)=diag_objectives(Dno)-2*tensorprod(XX(:,:,:,tt).^2,(diag(c1_est).*diag(c2_est)'.*permute(diag(c3_est),[3 2 1])+Bsymbol(1,1,1)),[1 2 3])/210; %n
         end
     end
