@@ -10,10 +10,10 @@ end
 
 XX=XX-mean(XX,4);
 n=size(XX,4);
-st = einsum(XX(1:end-D,1:end-D,1:end-D,:),XX(1+D:end,1+D:end,1+D:end,:),[1 2 3 4],[1 2 3 4])/n;
+st = einsum(XX(1:end-D,1:end-D,1:end,:),XX(1+D:end,1+D:end,1:end,:),[1 2 3 4],[1 2 3 4])/n;
 
-c1_est = einsum(XX(:,1:end-D,1:end-D,:),XX(:,1+D:end,1+D:end,:),[2 3 4],[2 3 4])/n;
-c2_est = einsum(XX(1:end-D,:,1:end-D,:),XX(1+D:end,:,1+D:end,:),[1 3 4],[1 3 4])/n/st;
+c1_est = einsum(XX(:,1:end-D,1:end,:),XX(:,1+D:end,1:end,:),[2 3 4],[2 3 4])/n;
+c2_est = einsum(XX(1:end-D,:,1:end,:),XX(1+D:end,:,1:end,:),[1 3 4],[1 3 4])/n/st;
 c3_est = einsum(XX(1:end-D,1:end-D,:,:),XX(1+D:end,1+D:end,:,:),[1 2 4],[1 2 4])/n/st;
 
 sym1size=norm(c1_est+c1_est','fro');antisym1size=norm(c1_est-c1_est','fro'); c1symscore=(sym1size-antisym1size)/(sym1size+antisym1size);
