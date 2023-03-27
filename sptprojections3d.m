@@ -1,4 +1,4 @@
-function [eta_hat123,firstevals123,c1_est,c2_est,c3_est] = sptprojections3d(XX,D,d1)
+function [eta_hat123,firstevals123,c1_est,c2_est,c3_est] = sptprojections3d(XX,D,d1,showfigs)
 %SPTPROJECTIONS3D Project data XX onto the first d1*d1*d1 eigenfunctions found
 %by SPT with bandwidth D
 if nargin<2
@@ -6,6 +6,9 @@ if nargin<2
 end
 if nargin<3
     d1=5;
+end
+if nargin<4
+    showfigs=false;
 end
 
 XX=XX-mean(XX,4);
@@ -42,4 +45,8 @@ firstefns3=V3(:,idx3(1:d1));
 firstevals123=firstevals1.*firstevals2'.*permute(firstevals3,[3 2 1]);
 firstefns123=permute(firstefns1,[1 3 4 2]).*permute(firstefns2,[3 1 4 5 2]).*permute(firstefns3,[3 4 1 5 6 2]);
 eta_hat123=einsum(XX,firstefns123,[1 2 3],[1 2 3]);
+
+if showfigs
+    plot_efns;
+end
 end
