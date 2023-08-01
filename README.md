@@ -1,5 +1,6 @@
 # SPT-for-fMRI
 MATLAB code for Shifted Partial Tracing for the analysis of fMRI
+This was a summer research project completed by Alex Yan in 2022. Code is original, except for einsum.m which is from the MATLAB file exchange and carries its own license.
 
 **Main programs:**
 
@@ -9,7 +10,7 @@ pcaprojections3d - project data onto basis functions using pca
 
 sptprojections3d - project data onto basis functions using spt
 
-changepoints - given projected data, finds location of best fit AMOC and the corresponding test statistics
+changepoints - given projected data, finds location of best fit epidemic change and the corresponding test statistics
 
 estdelta3d - computes the cost function for a range of values of bandwidth delta
 
